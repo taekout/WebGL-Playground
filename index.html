@@ -31,9 +31,10 @@
     var gl;
     function initGL(canvas) {
         try {
-            gl = canvas.getContext("experimental-webgl");
+            gl = canvas.getContext("experimental-webgl", { antialias: false });
             gl.viewportWidth = canvas.width;
             gl.viewportHeight = canvas.height;
+            gl.imageSmoothingEnabled = false;
         } catch (e) {
         }
         if (!gl) {
@@ -101,21 +102,25 @@
         lineVBO = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, lineVBO);
         var lineVertices = [
-            -1.0, -1.0,  0.0,
-            1.0, 1.0,  0.0,
+            0.1, -1.0,  0.0,
+            0.1, 1.0,  0.0,
+            -1.0, 0.1, 0.0,
+            1.0, 0.1, 0.0
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lineVertices), gl.STATIC_DRAW);
         lineVBO.itemSize = 3;
-        lineVBO.numItems = 2;
+        lineVBO.numItems = 4;
         lineColorBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, lineColorBuffer);
         var lineColors = [
             1.0, 0.0, 0.0, 1.0,
-            1.0, 0.0, 0.0, 1.0
+            1.0, 0.0, 0.0, 1.0,
+            0.0, 1.0, 0.0, 1.0,
+            0.0, 1.0, 0.0, 1.0
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lineColors), gl.STATIC_DRAW);
         lineColorBuffer.itemSize = 4;
-        lineColorBuffer.numItems = 2;
+        lineColorBuffer.numItems = 4;
       
     }
     function drawScene() {
