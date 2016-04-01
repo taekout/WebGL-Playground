@@ -7,7 +7,7 @@
 <script type="text/javascript" src="glMatrix-0.9.5.min.js"></script>
 
 <script id="shader-fs" type="x-shader/x-fragment">
-    precision mediump float;
+    precision highp float;
     varying vec4 vColor;
     void main(void) {
         gl_FragColor = vColor;
@@ -17,13 +17,51 @@
 <script id="shader-vs" type="x-shader/x-vertex">
     attribute vec3 aVertexPosition;
     attribute vec4 aVertexColor;
+    
     uniform mat4 uMVMatrix;
     uniform mat4 uPMatrix;
+    uniform vec2 uScreenSize;
+    
     varying vec4 vColor;
-    void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-        vColor = aVertexColor;
+
+    vec4 computePixelLocation(in vec4 point, in vec2 screenSize)
+    {
+        vec2 offset = vec2(0.5, 0.5);
+        //
+        // Do perspective divide
+        //
+        vec2 pts = point.xy / point.w;
+        //
+        // Compute pixel location
+        //
+        vec2 xyf = vec2((pts/2.0+.5)*screenSize);
+        //
+        // Filter out the plot box edges for special rounding. 
+        //
+        float x = xyf.x; //filter(xyf.x, plotBox.x, plotBox.z);
+        float y = xyf.y; //filter(xyf.y, plotBox.y, plotBox.w);
+        //
+        // Truncate to integers
+        //
+        ivec2 xy = ivec2(int(x-0.5), int(y-0.5));
+        //
+        // Convert that location back to screen space and add offset to center the vertex on the pixel
+        //
+        vec2 res = (vec2(xy)+offset)*2.0/screenSize-1.0;
+        //
+        // Convert the screen space back to NDC -- removing perspective divide.
+        //
+        vec4 p = vec4(res*point.w, point.z, point.w);
+        return p;
     }
+    
+    void main(void) {
+        vec4 pos = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        vColor = aVertexColor;
+        gl_Position = computePixelLocation(pos, uScreenSize);
+    }
+
+
 </script>
 
 
@@ -31,7 +69,7 @@
     var gl;
     function initGL(canvas) {
         try {
-            gl = canvas.getContext("experimental-webgl", { antialias: false });
+            gl = canvas.getContext("experimental-webgl", { antialias: true });
             gl.viewportWidth = canvas.width;
             gl.viewportHeight = canvas.height;
             gl.imageSmoothingEnabled = false;
@@ -88,12 +126,14 @@
         gl.enableVertexAttribArray(shaderProgram.vertexColorAttribute);
         shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
         shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+        shaderProgram.screenSizeUniform = gl.getUniformLocation(shaderProgram, "uScreenSize");
     }
     var mvMatrix = mat4.create();
     var pMatrix = mat4.create();
-    function setMatrixUniforms() {
+    function setUniforms() {
         gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
         gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+        gl.uniform2f(shaderProgram.screenSizeUniform, gl.viewportWidth, gl.viewportHeight);
     }
     var lineVBO;
     var lineColorBuffer;
@@ -102,10 +142,10 @@
         lineVBO = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, lineVBO);
         var lineVertices = [
-            0.1, -1.0,  0.0,
-            0.1, 1.0,  0.0,
-            -1.0, 0.1, 0.0,
-            1.0, 0.1, 0.0
+            0.1, -0.25,  0.0,
+            0.1, 0.25,  0.0,
+            -0.25, 0.1, 0.0,
+            0.25, 0.1, 0.0
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lineVertices), gl.STATIC_DRAW);
         lineVBO.itemSize = 3;
@@ -133,7 +173,7 @@
         gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, lineVBO.itemSize, gl.FLOAT, false, 0, 0);
         gl.bindBuffer(gl.ARRAY_BUFFER, lineColorBuffer);
         gl.vertexAttribPointer(shaderProgram.vertexColorAttribute, lineColorBuffer.itemSize, gl.FLOAT, false, 0, 0);
-        setMatrixUniforms();
+        setUniforms();
         gl.drawArrays(gl.LINES, 0, lineVBO.numItems);
     }
     function webGLStart() {
