@@ -185,18 +185,46 @@
         gl.enable(gl.DEPTH_TEST);
         drawScene();
     }
+	
+	function copy() {
+		var pixels = new Uint8Array(gl.viewportWidth * gl.viewportHeight * 4);
+		gl.readPixels(0, 0, gl.viewportWidth, gl.viewportHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+		console.log(pixels);
+	}
 </script>
 <style>
 body {
 	background-color: #d0e4fe;
-	image-rendering: crisp-edges;
-	 -ms-interpolation-mode: nearest-neighbor;
+	padding: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 0px none;
+    display: block;
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -o-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 canvas {
 	background-color: #d0e4fe;
-	image-rendering: crisp-edges;
-	 -ms-interpolation-mode: nearest-neighbor;
+	padding: 0px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 0px none;
+    display: block;
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -o-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
 }
 
 </style>
@@ -204,7 +232,8 @@ canvas {
 
 
 <body onload="webGLStart();">
-    <canvas id="lesson02-canvas" style="border: none;" width="500" height="500" ></canvas>
+    <canvas id="lesson02-canvas" style="border: none;" width="50" height="50" ></canvas>
+	<button onclick="copy()">Copy</button>
 </body>
 
 </html>
